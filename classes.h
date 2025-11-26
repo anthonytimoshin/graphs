@@ -35,7 +35,6 @@ public:
         "Read_Graph_From_File",
         "Remove_Vertex",
         "Remove_Edge",
-        "Check_Connectivity",
         "Print_Connectivity_Components",
         "Distance_Between_Vertexes",
         "All_Distances_Between_Vertexes",
@@ -55,7 +54,6 @@ public:
     void list_of_edges(int num);                // список ребер входящих/выходящих в/из вершины
     void print_vertexes();                      // печать всех вершин
     void create_empty_graph();                  // создать пустой граф
-    void read_graph_from_file();                // считать граф из файла
     void remove_vertex(int num);                // удалить вершину
     void remove_edge(int a, int b);             // удалить ребро
     bool check_connectivity();                  // проверить на связность

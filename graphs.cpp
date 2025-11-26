@@ -36,7 +36,6 @@ void Graph::get_graph() {
 }
 
 void Graph::print_graph() {
-    std::cout << vertexes << std::endl;
     for (int i = 0; i < vertexes; i++) {
         for (size_t j = 0; j < graph[i].size(); j++) {
             std::cout << graph[i][j].vertex << ":" << graph[i][j].weight;
@@ -53,37 +52,74 @@ bool Graph::check_type() {
 }
 
 int Graph::size() {
-    std::cout << "Size: " << std::endl;
+    std::cout << "Size: " << vertexes;
 }
 
 int Graph::weight(int a, int b) {
     is_edge(a, b); // проверка на существование ребра
-    std::cout << "Weight: " << a << " " <<  b << std::endl;
+    
 }
 
 bool Graph::is_edge(int a, int b) {
-    std::cout << "Is_edge: " << a << " " <<  b << std::endl;
+    
 }
 
 void Graph::add_vertex(int num) {
-    std::cout << "Add_vertex: " << num << std::endl;
+    //
+    vertexes++;
 }
 
 void Graph::add_edge(int a, int b, int weight) {
-    std::cout << "Add_edge: " << a << " " <<  b << " " << weight << std::endl;
+    
 }
 
 void Graph::print_edges() {
-    std::cout << "Print_edges: " << std::endl;
+    
 }
 
 void Graph::list_of_edges(int num) {
-    std::cout << "List_of_edges: " << num << std::endl;
+    
+}
+
+void Graph::print_vertexes() {
+
+}
+
+void Graph::create_empty_graph() {
+
+}
+
+void Graph::remove_vertex(int num) {
+
+}
+
+void Graph::remove_edge(int a, int b) {
+
+}
+
+bool Graph::check_connectivity() {
+
+}
+
+void Graph::print_connectivity_components() {
+
+}
+
+int Graph::distance(int a, int b) {
+
+}
+
+int Graph::all_distances(int num) {
+
+}
+
+int Graph::spanning_tree() {
+
 }
 
 void Graph::func_handler(int selected) {
     switch (selected) {
-        case 0: {
+        case 0: {       // print_graph
             print_graph();
         }
 
@@ -136,12 +172,12 @@ void Graph::func_handler(int selected) {
             break;
         }
 
-        case 6: {       // list_of_all_edges
+        case 6: {       // print_edges
             print_edges();
             break;
         }
         
-        case 7: {
+        case 7: {       // list_of_edges
             int num;
             std::cout << "Enter the number of vertex:\n";
             std::cout << "num: ";
@@ -149,5 +185,38 @@ void Graph::func_handler(int selected) {
             add_vertex(num);
             break;
         }
+
+        case 8: {       // print_vertexes
+        
+        }
+
+        case 9: {       // create_empty_graph
+
+        }
+
+        case 10: {      // remove_vertex
+
+        }
+
+        case 11: {      // remove_edge
+
+        }
+
+        case 12 : {     // print_connectivity_components
+
+        }
+
+        case 13 : {     // distance
+
+        }
+
+        case 14: {      // all_distances
+
+        }
+
+        case 15: {      // spanning_tree
+
+        }
     }
  }
+ 

@@ -17,9 +17,9 @@ int Menu::menu(std::vector<std::string> menu_items) {
 
     while (true) {
         clear();            // очистка экрана каждый раз перед отрисовкой
-        mvprintw(1, 10, "Function menu");
+        mvprintw(1, 5, "Function menu");
         for (int i = 0; i < menu_items_size; i++) {
-            move(3 + i, 12);
+            move(3 + i, 7);
             if (i == selected) {
                 attron(A_REVERSE);      // инверсия цветов выбранного пункта
                 printw("> %s", menu_items[i].c_str());
@@ -29,8 +29,8 @@ int Menu::menu(std::vector<std::string> menu_items) {
             }
         }
 
-        mvprintw(22, 5, "Use UP/DOWN arrows to move");
-        mvprintw(23, 5, "Press ENTER to choose or press ESC to exit");
+        mvprintw(4 + menu_items_size, 5, "Use UP/DOWN arrows to move");
+        mvprintw(5 + menu_items_size, 5, "Press ENTER to choose or press ESC to exit");
 
         refresh();              // обновляем экран
         key = getch();          // ожидание нажатия клавиши
@@ -73,9 +73,7 @@ bool Menu::key_handler(int key, int& selected, int menu_items_size) {
 
 void Menu::menu_end(int selected) {
     endwin();
-    if (selected != -1) {
-        std::cout << "You selected option №" << selected << std::endl; // доработать вывод
-    } else {
+    if (selected == -1) {
         std::cout << "You interrupted the program execution." << std::endl;
     }
 }
