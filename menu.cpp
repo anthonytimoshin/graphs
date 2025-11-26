@@ -1,65 +1,11 @@
-#ifndef GRAPHS_H
-#define GRAPHS_H
-
-#include <iostream>
-#include <fstream>
-#include <ncurses.h>
-#include <vector>
-#include <string>
-
-class Graph {
-public:
-    std::string path;
-    int type;
-    std::vector<std::string> function_items = {
-        "Size", 
-        "Weight", 
-        "Is_Edge", 
-        "Add_Vertex", 
-        "Add_Edge", 
-        "List_of_Edges"
-    };
-
-public:
-    void get_graph();
-    void open_graph();
-    int size();
-    int weight(int a, int b);
-    bool is_edge(int a, int b);
-    void add_vertex(int num);
-    void add_edge(int a, int b);
-    void list_of_edges(int num);
-};
-
-class Menu {
-public:
-    void menu_init();
-    int menu(std::vector<std::string> menu_items);
-    bool key_handler(int key, int& selected, int menu_items_size);
-    void menu_end(int selected);
-};
-
-void Graph::get_graph() {
-    std::cout << "Enter the path to the graph: ";
-    std::cin >> path;
-    std::cout <<"\nEnter the graph type (1 - directed, 2 - undirected): ";
-    std::cin >> type;
-    std::cout << "\n";
-}
-
-void Graph::open_graph() {
-    std::fstream graph(path);
-    if (!graph.is_open()) {
-        std::cout << "Error! File can't be opened";
-    }
-}
+#include "classes.h"
 
 void Menu::menu_init() {
     initscr();              // инициализация ncurses
     noecho();               // убираем эхо-печать нажатых клавиш
     cbreak();               // немедленная реакция на нажатие клавиш
     keypad(stdscr, TRUE);   // подключение обработки стрелок
-    curs_set(0);            // скрывает мигающий курсор (потестить 0, 1, 2)
+    curs_set(0);            // скрывает мигающий курсор
 }
 
 int Menu::menu(std::vector<std::string> menu_items) {
@@ -71,9 +17,9 @@ int Menu::menu(std::vector<std::string> menu_items) {
 
     while (true) {
         clear();            // очистка экрана каждый раз перед отрисовкой
-        mvprintw(5, 10, "Function menu");
+        mvprintw(1, 10, "Function menu");
         for (int i = 0; i < menu_items_size; i++) {
-            move(7 + i, 12);
+            move(3 + i, 12);
             if (i == selected) {
                 attron(A_REVERSE);      // инверсия цветов выбранного пункта
                 printw("> %s", menu_items[i].c_str());
@@ -83,8 +29,8 @@ int Menu::menu(std::vector<std::string> menu_items) {
             }
         }
 
-        mvprintw(15, 5, "Use UP/DOWN arrows to move");
-        mvprintw(16, 5, "Press ENTER to choose or press ESC to exit");
+        mvprintw(21, 5, "Use UP/DOWN arrows to move");
+        mvprintw(22, 5, "Press ENTER to choose or press ESC to exit");
 
         refresh();              // обновляем экран
         key = getch();          // ожидание нажатия клавиши
@@ -128,14 +74,15 @@ bool Menu::key_handler(int key, int& selected, int menu_items_size) {
 void Menu::menu_end(int selected) {
     endwin();
     if (selected != -1) {
-        std::cout << "You selected option №" << selected << std::endl;
+        std::cout << "You selected option №" << selected << std::endl; // доработать вывод
     } else {
         std::cout << "You interrupted the program execution." << std::endl;
     }
 }
 
-int Graph::size() {
-
+void Menu::press_enter() {
+    std::cout << std::endl << "Press ENTER to continue";
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
 }
-
-#endif // GRAPHS_H
