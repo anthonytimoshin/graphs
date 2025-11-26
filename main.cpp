@@ -6,7 +6,6 @@ int main() {
 	Graph graph;
 	
 	graph.get_graph();
-	graph.print_graph();
 	while (true) {
 		int selected = menu.menu(graph.function_items);
 		if (selected == -1) {

@@ -22,6 +22,7 @@ public:
     std::string path;                           // путь к файлу, в котором хранится граф
     int type;                                   // хранит тип графа - ориентированнный/неориентированный
     std::vector<std::string> function_items = { // список функционала для меню
+        "Print_Graph",
         "Size", 
         "Weight", 
         "Is_Edge", 
@@ -45,7 +46,6 @@ public:
     void get_graph();                           // принимает путь к файлу, где хранится граф
     void print_graph();                         // печатает граф
     bool check_type();                          // определяет тип графа (TRUE - ориентированный, FALSE - неориентированный)
-    void func_handler(int selected);            // обработчик функций
     int size();                                 // возвращает количество вершин в графе
     int weight(int a, int b);                   // возвращает вес ребра/дуги
     bool is_edge(int a, int b);                 // проверка на наличие ребра
@@ -63,6 +63,7 @@ public:
     int distance(int a, int b);                 // найти кратчайший путь и его длину между двумя вершинами 
     int all_distances(int num);                 // найти расстояние от вершины до всех остальных вершин
     int spanning_tree();                        // найти минимальное остовное дерево
+    void func_handler(int selected);            // обработчик функций
 };
 
 class Menu {

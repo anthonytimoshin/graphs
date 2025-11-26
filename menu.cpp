@@ -29,8 +29,8 @@ int Menu::menu(std::vector<std::string> menu_items) {
             }
         }
 
-        mvprintw(21, 5, "Use UP/DOWN arrows to move");
-        mvprintw(22, 5, "Press ENTER to choose or press ESC to exit");
+        mvprintw(22, 5, "Use UP/DOWN arrows to move");
+        mvprintw(23, 5, "Press ENTER to choose or press ESC to exit");
 
         refresh();              // обновляем экран
         key = getch();          // ожидание нажатия клавиши

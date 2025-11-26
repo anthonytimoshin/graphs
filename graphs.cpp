@@ -52,73 +52,6 @@ bool Graph::check_type() {
     
 }
 
- void Graph::func_handler(int selected) {
-    switch (selected) {
-        case 0: {       // size
-            size();
-            break;
-        }
-
-        case 1: {       // weight
-            int a, b;
-            std::cout << "Enter the numbers of vertexes:\n";
-            std::cout << "a: ";
-            std::cin >> a;
-            std::cout << "b: ";
-            std::cin >> b;
-            weight(a, b);
-            break;
-        }
-
-        case 2: {       // is_edge
-            int a, b;
-            std::cout << "Enter the numbers of vertexes:\n";
-            std::cout << "a: ";
-            std::cin >> a;
-            std::cout << "b: ";
-            std::cin >> b;
-            is_edge(a, b);
-            break;
-        }
-
-        case 3: {       // add_vertex
-            int num;
-            std::cout << "Enter the number of vertex:\n";
-            std::cout << "num: ";
-            std::cin >> num;
-            add_vertex(num);
-            break;
-        }
-
-        case 4: {       // add_edge
-            int a, b, weight;
-            std::cout << "Enter the numbers of vertexes and weight of edge:\n";
-            std::cout << "a: ";
-            std::cin >> a;
-            std::cout << "b: ";
-            std::cin >> b; 
-            std::cout << "weight: ";
-            std::cin >> weight;
-            add_edge(a, b, weight);
-            break;
-        }
-
-        case 5: {       // list_of_all_edges
-            print_edges();
-            break;
-        }
-        
-        case 6: {
-            int num;
-            std::cout << "Enter the number of vertex:\n";
-            std::cout << "num: ";
-            std::cin >> num;
-            add_vertex(num);
-            break;
-        }
-    }
- }
-
 int Graph::size() {
     std::cout << "Size: " << std::endl;
 }
@@ -147,3 +80,74 @@ void Graph::print_edges() {
 void Graph::list_of_edges(int num) {
     std::cout << "List_of_edges: " << num << std::endl;
 }
+
+void Graph::func_handler(int selected) {
+    switch (selected) {
+        case 0: {
+            print_graph();
+        }
+
+        case 1: {       // size
+            size();
+            break;
+        }
+
+        case 2: {       // weight
+            int a, b;
+            std::cout << "Enter the numbers of vertexes:\n";
+            std::cout << "a: ";
+            std::cin >> a;
+            std::cout << "b: ";
+            std::cin >> b;
+            weight(a, b);
+            break;
+        }
+
+        case 3: {       // is_edge
+            int a, b;
+            std::cout << "Enter the numbers of vertexes:\n";
+            std::cout << "a: ";
+            std::cin >> a;
+            std::cout << "b: ";
+            std::cin >> b;
+            is_edge(a, b);
+            break;
+        }
+
+        case 4: {       // add_vertex
+            int num;
+            std::cout << "Enter the number of vertex:\n";
+            std::cout << "num: ";
+            std::cin >> num;
+            add_vertex(num);
+            break;
+        }
+
+        case 5: {       // add_edge
+            int a, b, weight;
+            std::cout << "Enter the numbers of vertexes and weight of edge:\n";
+            std::cout << "a: ";
+            std::cin >> a;
+            std::cout << "b: ";
+            std::cin >> b; 
+            std::cout << "weight: ";
+            std::cin >> weight;
+            add_edge(a, b, weight);
+            break;
+        }
+
+        case 6: {       // list_of_all_edges
+            print_edges();
+            break;
+        }
+        
+        case 7: {
+            int num;
+            std::cout << "Enter the number of vertex:\n";
+            std::cout << "num: ";
+            std::cin >> num;
+            add_vertex(num);
+            break;
+        }
+    }
+ }
