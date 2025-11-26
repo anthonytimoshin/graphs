@@ -4,17 +4,52 @@ void Graph::get_graph() {
     std::cout << "Enter the path to the graph: ";
     std::cin >> path;
     std::cout << std::endl;
+
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cout << "Error! File can't be opened";
+    }
+
+    file >> vertexes;
+    graph.resize(vertexes);     // задаем размер вектора
+    std::string line;
+    std::getline(file, line);   // читаем оставшуюся часть первой строки
+    
+    for (int i = 0; i < vertexes; i++) {
+        std::getline(file, line);
+        std::stringstream ss(line);
+        std::string pair;
+        
+        while (ss >> pair) {
+            size_t colon_pos = pair.find(':');      // деление строки по символу ':'
+            if (colon_pos != std::string::npos) {
+                int vertex = std::stoi(pair.substr(0, colon_pos));
+                int weight = std::stoi(pair.substr(colon_pos + 1));
+                
+                graph[i].push_back({vertex, weight});   // добавляем ребро в граф
+            }
+        }
+    }
+
+    file.close();
+    std::cout << "Graph successfully loaded from " << path << std::endl;
+}
+
+void Graph::print_graph() {
+    std::cout << vertexes << std::endl;
+    for (int i = 0; i < vertexes; i++) {
+        for (size_t j = 0; j < graph[i].size(); j++) {
+            std::cout << graph[i][j].vertex << ":" << graph[i][j].weight;
+            if (j < graph[i].size() - 1) {
+                std::cout << " ";
+            }
+        }
+        std::cout << std::endl;
+    }
 }
 
 bool Graph::check_type() {
     
-}
-
-void Graph::open_graph() {
-    std::fstream graph(path);
-    if (!graph.is_open()) {
-        std::cout << "Error! File can't be opened";
-    }
 }
 
  void Graph::func_handler(int selected) {

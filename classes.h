@@ -6,9 +6,18 @@
 #include <ncurses.h>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <unistd.h> // sleep (потом убрать)
 
-class Graph {
+class Graph { 
+private:
+    int vertexes;                               // количество вершин в графе
+    struct Edge {                               // структура для хранения с полями
+        int vertex;
+        int weight;
+    };
+    std::vector<std::vector<Edge>> graph;       // список смежности
+
 public:
     std::string path;                           // путь к файлу, в котором хранится граф
     int type;                                   // хранит тип графа - ориентированнный/неориентированный
@@ -34,9 +43,8 @@ public:
 
 public:
     void get_graph();                           // принимает путь к файлу, где хранится граф
+    void print_graph();                         // печатает граф
     bool check_type();                          // определяет тип графа (TRUE - ориентированный, FALSE - неориентированный)
-    void open_graph();                          // ? функция открытия файла
-    void close_graph();                         // ? функция закрытия файла
     void func_handler(int selected);            // обработчик функций
     int size();                                 // возвращает количество вершин в графе
     int weight(int a, int b);                   // возвращает вес ребра/дуги
