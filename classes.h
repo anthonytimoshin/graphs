@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <unistd.h> // sleep (потом убрать)
+#include <set>
 
 class Graph { 
 private:
@@ -45,10 +46,10 @@ public:
     void get_graph();                           // принимает путь к файлу, где хранится граф
     void print_graph();                         // печатает граф
     bool check_type();                          // определяет тип графа (TRUE - ориентированный, FALSE - неориентированный)
-    int size();                                 // возвращает количество вершин в графе
+    void size();                                // возвращает количество вершин в графе
     int weight(int a, int b);                   // возвращает вес ребра/дуги
     bool is_edge(int a, int b);                 // проверка на наличие ребра
-    void add_vertex(int num);                   // добавить вершину
+    void add_vertex();                          // добавить вершину
     void add_edge(int a, int b, int weight);    // добавить ребро 
     void print_edges();                         // список всех ребер
     void list_of_edges(int num);                // список ребер входящих/выходящих в/из вершины
