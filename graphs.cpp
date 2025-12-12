@@ -1,4 +1,11 @@
 #include "classes.h"
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <limits>
+#include <algorithm>
+#include <functional>
 
 void Graph::get_graph() {
     std::cout << "Enter the path to the graph: ";
@@ -16,7 +23,10 @@ void Graph::get_graph() {
     std::string line;
     std::getline(file, line);   // читаем оставшуюся часть первой строки
     
+    std::set<int> all_vertices;
+    
     for (int i = 0; i < vertexes; i++) {
+        all_vertices.insert(i + 1); // добавляем текущую вершину
         std::getline(file, line);
         std::stringstream ss(line);
         std::string pair;
@@ -27,12 +37,16 @@ void Graph::get_graph() {
                 int vertex = std::stoi(pair.substr(0, colon_pos));
                 int weight = std::stoi(pair.substr(colon_pos + 1));
                 
-                graph[i].push_back({vertex, weight});   // добавляем ребро в граф
+                graph[i].push_back({vertex, weight});
+                all_vertices.insert(vertex); // добавляем вершину из ребра
             }
         }
     }
 
     file.close();
+    
+    original_graph = graph;
+    
     std::cout << "Graph successfully loaded from " << path << std::endl;
 }
 
@@ -49,22 +63,77 @@ void Graph::print_graph() {
 }
 
 bool Graph::check_type() {
-    // Для ориентированного графа проверяем, есть ли несимметричные рёбра
+    bool is_directed = false;
+    
+    // Создаем map для отслеживания всех рёбер и их весов
+    // Ключ: упорядоченная пара вершин, значение: минимальный вес
+    std::map<std::pair<int, int>, int> edge_weights;
+    
+    // Собираем все рёбра из текущего графа
     for (int i = 0; i < vertexes; i++) {
         for (const auto& edge : graph[i]) {
-            bool found = false;
-            for (const auto& rev_edge : graph[edge.vertex - 1]) {
-                if (rev_edge.vertex == i + 1 && rev_edge.weight == edge.weight) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return true; // ориентированный
+            int u = i + 1;
+            int v = edge.vertex;
+            int weight = edge.weight;
+            
+            // Упорядочиваем вершины
+            if (u > v) std::swap(u, v);
+            
+            auto key = std::make_pair(u, v);
+            
+            // Если ребро уже есть, берем минимальный вес
+            if (edge_weights.find(key) != edge_weights.end()) {
+                edge_weights[key] = std::min(edge_weights[key], weight);
+            } else {
+                edge_weights[key] = weight;
             }
         }
     }
-    return false; // неориентированный     
+    
+    // Проверяем, был ли граф ориентированным
+    // Если в исходном графе есть рёбра только в одну сторону - он ориентированный
+    for (int i = 0; i < vertexes; i++) {
+        for (const auto& edge : graph[i]) {
+            int target = edge.vertex - 1;
+            bool found_reverse = false;
+            
+            for (const auto& rev_edge : graph[target]) {
+                if (rev_edge.vertex == i + 1) {
+                    found_reverse = true;
+                    break;
+                }
+            }
+            
+            if (!found_reverse) {
+                is_directed = true;
+                break;
+            }
+        }
+        if (is_directed) break;
+    }
+    
+    // Перестраиваем граф как неориентированный из edge_weights
+    graph.clear();
+    graph.resize(vertexes);
+    
+    for (const auto& entry : edge_weights) {
+        int u = entry.first.first - 1;
+        int v = entry.first.second - 1;
+        int weight = entry.second;
+        
+        if (u >= 0 && u < vertexes && v >= 0 && v < vertexes) {
+            graph[u].push_back({v + 1, weight});
+            graph[v].push_back({u + 1, weight});
+        }
+    }
+    
+    if (is_directed) {
+        std::cout << "\nGraph was directed. Successfully converted to undirected." << std::endl;
+    } else {
+        std::cout << "Graph is undirected." << std::endl;
+    }
+    
+    return is_directed;
 }
 
 void Graph::size() {
@@ -72,17 +141,19 @@ void Graph::size() {
 }
 
 int Graph::weight(int a, int b) {
-    if (!is_edge(a, b)) {
-        std::cout << "Edge doesn't exist!" << std::endl;
+    if (a < 1 || a > vertexes || b < 1 || b > vertexes) { 
+        std::cout << "Vertex numbers are out of range! (should be 1.." << vertexes << ")" << std::endl;
         return -1;
     }
     
-    for (const auto& edge : graph[a-1]) {
+    for (const auto& edge : original_graph[a-1]) {
         if (edge.vertex == b) {
             std::cout << "Weight between " << a << " and " << b << ": " << edge.weight << std::endl;
             return edge.weight;
         }
     }
+    
+    std::cout << "No edge between " << a << " and " << b << std::endl;
     return -1;
 }
 
@@ -115,19 +186,39 @@ void Graph::add_edge(int a, int b, int weight) {
         return;
     }
     
-    // Проверяем, есть ли уже такое ребро
+    // Проверяем, есть ли уже такое ребро a->b
+    bool edge_exists = false;
     for (auto& edge : graph[a-1]) {
         if (edge.vertex == b) {
             edge.weight = weight;
-            std::cout << "Edge weight updated!" << std::endl;
-            return;
+            edge_exists = true;
+            break;
         }
     }
     
-    // Добавляем новое ребро
-    graph[a-1].push_back({b, weight});
-    std::cout << "Edge added successfully!" << std::endl;
+    // Если ребра не было, добавляем его
+    if (!edge_exists) {
+        graph[a-1].push_back({b, weight});
+    }
+    
+    // Проверяем, есть ли обратное ребро b->a
+    bool reverse_exists = false;
+    for (auto& edge : graph[b-1]) {
+        if (edge.vertex == a) {
+            edge.weight = weight;
+            reverse_exists = true;
+            break;
+        }
+    }
+    
+    // Если обратного ребра нет, добавляем его
+    if (!reverse_exists) {
+        graph[b-1].push_back({a, weight});
+    }
+    
+    std::cout << "Edge added/updated successfully!" << std::endl;
 }
+
 
 void Graph::print_edges() {
     std::cout << "All edges in the graph:" << std::endl;
@@ -169,7 +260,7 @@ void Graph::print_vertexes() {
     std::set<int> unique_vertices;
     for (int i = 1; i <= vertexes; i++) {
         unique_vertices.insert(i);
-        for (const auto& edge : graph[i]) {
+        for (const auto& edge : graph[i-1]) {
             unique_vertices.insert(edge.vertex);
         }
     }
@@ -226,13 +317,29 @@ void Graph::remove_edge(int a, int b) {
         return;
     }
     
-    // Удаляем ребро a -> b
+    bool removed_forward = false;
+    bool removed_backward = false;
+    
+    // Удаляем ребро a->b
     auto it = std::remove_if(graph[a-1].begin(), graph[a-1].end(),
         [b](const Edge& e) { return e.vertex == b; });
     
     if (it != graph[a-1].end()) {
         graph[a-1].erase(it, graph[a-1].end());
-        std::cout << "Edge removed successfully!" << std::endl;
+        removed_forward = true;
+    }
+    
+    // Удаляем ребро b->a
+    it = std::remove_if(graph[b-1].begin(), graph[b-1].end(),
+        [a](const Edge& e) { return e.vertex == a; });
+    
+    if (it != graph[b-1].end()) {
+        graph[b-1].erase(it, graph[b-1].end());
+        removed_backward = true;
+    }
+    
+    if (removed_forward || removed_backward) {
+        std::cout << "Edge(s) removed successfully!" << std::endl;
     } else {
         std::cout << "Edge doesn't exist!" << std::endl;
     }
@@ -241,40 +348,104 @@ void Graph::remove_edge(int a, int b) {
 bool Graph::check_connectivity() {
     if (vertexes == 0) return true;
     
+    // Получаем список всех вершин, которые реально существуют в графе
+    std::set<int> all_vertices;
+    for (int i = 0; i < vertexes; i++) {
+        if (!graph[i].empty()) {
+            all_vertices.insert(i + 1);
+        }
+        for (const auto& edge : graph[i]) {
+            all_vertices.insert(edge.vertex);
+        }
+    }
+    
+    if (all_vertices.empty()) return true;
+    
+    // Преобразуем граф в неориентированный для обхода
+    std::vector<std::vector<int>> undirected_graph(vertexes);
+    for (int i = 0; i < vertexes; i++) {
+        for (const auto& edge : graph[i]) {
+            int v = edge.vertex - 1;
+            if (v >= 0 && v < vertexes) {
+                undirected_graph[i].push_back(v);
+                undirected_graph[v].push_back(i);
+            }
+        }
+    }
+    
+    // Начинаем BFS с первой реальной вершины
+    int start_vertex = *all_vertices.begin() - 1;
     std::vector<bool> visited(vertexes, false);
     std::queue<int> q;
     
-    // Начинаем с вершины 0 (пользовательская вершина 1)
-    q.push(0);
-    visited[0] = true;
+    q.push(start_vertex);
+    visited[start_vertex] = true;
+    int visited_count = 1;
     
     while (!q.empty()) {
         int current = q.front();
         q.pop();
         
-        for (const auto& edge : graph[current]) {
-            int neighbor = edge.vertex - 1; // Преобразуем в индекс программы
-            if (!visited[neighbor]) {
+        for (int neighbor : undirected_graph[current]) {
+            if (neighbor >= 0 && neighbor < vertexes && !visited[neighbor]) {
                 visited[neighbor] = true;
+                visited_count++;
                 q.push(neighbor);
             }
         }
     }
     
-    // Проверяем, все ли вершины посещены
-    for (bool v : visited) {
-        if (!v) return false;
+    // Проверяем, все ли реальные вершины были посещены
+    for (int v : all_vertices) {
+        if (v >= 1 && v <= vertexes && !visited[v - 1]) {
+            return false;
+        }
     }
     
     return true;
 }
 
 void Graph::print_connectivity_components() {
+    if (vertexes == 0) {
+        std::cout << "Graph is empty!" << std::endl;
+        return;
+    }
+    
+    // Преобразуем граф в неориентированный для обхода
+    std::vector<std::vector<int>> undirected_graph(vertexes);
+    for (int i = 0; i < vertexes; i++) {
+        for (const auto& edge : graph[i]) {
+            int v = edge.vertex - 1;
+            if (v >= 0 && v < vertexes) {
+                undirected_graph[i].push_back(v);
+                undirected_graph[v].push_back(i);
+            }
+        }
+    }
+    
+    // Находим все компоненты связности
     std::vector<bool> visited(vertexes, false);
     std::vector<std::vector<int>> components;
     
     for (int i = 0; i < vertexes; i++) {
-        if (!visited[i]) {
+        // Проверяем, является ли вершина реальной (имеет ребра или является конечной точкой ребра)
+        bool is_real_vertex = false;
+        if (!graph[i].empty()) {
+            is_real_vertex = true;
+        } else {
+            // Проверяем, есть ли ребра, которые ведут к этой вершине
+            for (int j = 0; j < vertexes; j++) {
+                for (const auto& edge : graph[j]) {
+                    if (edge.vertex - 1 == i) {
+                        is_real_vertex = true;
+                        break;
+                    }
+                }
+                if (is_real_vertex) break;
+            }
+        }
+        
+        if (is_real_vertex && !visited[i]) {
             std::vector<int> component;
             std::queue<int> q;
             
@@ -284,10 +455,9 @@ void Graph::print_connectivity_components() {
             while (!q.empty()) {
                 int current = q.front();
                 q.pop();
-                component.push_back(current + 1); // Сохраняем пользовательский номер
+                component.push_back(current + 1);
                 
-                for (const auto& edge : graph[current]) {
-                    int neighbor = edge.vertex - 1; // Преобразуем в индекс программы
+                for (int neighbor : undirected_graph[current]) {
                     if (!visited[neighbor]) {
                         visited[neighbor] = true;
                         q.push(neighbor);
@@ -295,6 +465,8 @@ void Graph::print_connectivity_components() {
                 }
             }
             
+            // Сортируем компоненту для красивого вывода
+            std::sort(component.begin(), component.end());
             components.push_back(component);
         }
     }
@@ -302,35 +474,39 @@ void Graph::print_connectivity_components() {
     std::cout << "Number of connectivity components: " << components.size() << std::endl;
     for (size_t i = 0; i < components.size(); i++) {
         std::cout << "Component " << i + 1 << ": ";
-        for (int v : components[i]) {
-            std::cout << v << " "; // v уже в пользовательской нумерации
+        for (size_t j = 0; j < components[i].size(); j++) {
+            std::cout << components[i][j];
+            if (j < components[i].size() - 1) {
+                std::cout << " ";
+            }
         }
         std::cout << std::endl;
     }
 }
-
 int Graph::distance(int a, int b) {
     if (a < 1 || a > vertexes || b < 1 || b > vertexes) {
         std::cout << "Vertex numbers are out of range!" << std::endl;
         return -1;
     }
     
-    // Преобразуем в индексы программы
+    // Используем ОРИГИНАЛЬНЫЙ граф (ориентированный)
     int source = a - 1;
     int target = b - 1;
     
-    // Алгоритм Беллмана-Форда
     std::vector<int> dist(vertexes, std::numeric_limits<int>::max());
+    std::vector<int> parent(vertexes, -1); // Массив предков для восстановления пути
     dist[source] = 0;
     
+    // Алгоритм Беллмана-Форда на оригинальном графе
     // Релаксация всех рёбер (V-1) раз
     for (int i = 0; i < vertexes - 1; i++) {
         for (int u = 0; u < vertexes; u++) {
-            for (const auto& edge : graph[u]) {
-                int v = edge.vertex - 1; // Преобразуем в индекс программы
+            for (const auto& edge : original_graph[u]) {
+                int v = edge.vertex - 1;
                 if (dist[u] != std::numeric_limits<int>::max() && 
                     dist[u] + edge.weight < dist[v]) {
                     dist[v] = dist[u] + edge.weight;
+                    parent[v] = u; // Запоминаем предка
                 }
             }
         }
@@ -338,8 +514,8 @@ int Graph::distance(int a, int b) {
     
     // Проверка на отрицательные циклы
     for (int u = 0; u < vertexes; u++) {
-        for (const auto& edge : graph[u]) {
-            int v = edge.vertex - 1; // Преобразуем в индекс программы
+        for (const auto& edge : original_graph[u]) {
+            int v = edge.vertex - 1;
             if (dist[u] != std::numeric_limits<int>::max() && 
                 dist[u] + edge.weight < dist[v]) {
                 std::cout << "Graph contains negative weight cycle!" << std::endl;
@@ -348,34 +524,43 @@ int Graph::distance(int a, int b) {
         }
     }
     
-    if (dist[target] == std::numeric_limits<int>::max()) {
-        std::cout << "No path between " << a << " and " << b << std::endl;
-        return -1;
-    }
+    // Восстанавливаем путь
+    std::vector<int> path = reconstruct_path(parent, source, target);
     
-    std::cout << "Distance between " << a << " and " << b << ": " << dist[target] << std::endl;
-    return dist[target];
+    // Выводим результат с путем
+    std::cout << "Directed distance from " << a << " to " << b << ": " << dist[target] << std::endl;
+    std::cout << "Path: " << std::endl;
+    std::cout << "  ";
+    
+    for (size_t i = 0; i < path.size(); i++) {
+        std::cout << path[i];
+        if (i < path.size() - 1) {
+            std::cout << " → ";
+        }
+    }
+    std::cout << std::endl;
 }
-
 int Graph::all_distances(int num) {
     if (num < 1 || num > vertexes) {
         std::cout << "Vertex number is out of range!" << std::endl;
         return -1;
     }
     
-    int source = num - 1; // Преобразуем в индекс программы
+    int source = num - 1;
     
     // Алгоритм Беллмана-Форда от вершины source
     std::vector<int> dist(vertexes, std::numeric_limits<int>::max());
+    std::vector<int> parent(vertexes, -1);
     dist[source] = 0;
     
     for (int i = 0; i < vertexes - 1; i++) {
         for (int u = 0; u < vertexes; u++) {
             for (const auto& edge : graph[u]) {
-                int v = edge.vertex - 1; // Преобразуем в индекс программы
+                int v = edge.vertex - 1;
                 if (dist[u] != std::numeric_limits<int>::max() && 
                     dist[u] + edge.weight < dist[v]) {
                     dist[v] = dist[u] + edge.weight;
+                    parent[v] = u;
                 }
             }
         }
@@ -384,7 +569,7 @@ int Graph::all_distances(int num) {
     // Проверка на отрицательные циклы
     for (int u = 0; u < vertexes; u++) {
         for (const auto& edge : graph[u]) {
-            int v = edge.vertex - 1; // Преобразуем в индекс программы
+            int v = edge.vertex - 1;
             if (dist[u] != std::numeric_limits<int>::max() && 
                 dist[u] + edge.weight < dist[v]) {
                 std::cout << "Graph contains negative weight cycle!" << std::endl;
@@ -393,16 +578,62 @@ int Graph::all_distances(int num) {
         }
     }
     
+    std::cout << "======================================" << std::endl;
     std::cout << "Distances from vertex " << num << " to all other vertices:" << std::endl;
+    std::cout << "======================================" << std::endl;
+    
     for (int i = 0; i < vertexes; i++) {
         if (i == source) continue;
+        
+        std::cout << std::endl << "To vertex " << (i + 1) << ": ";
+        
         if (dist[i] == std::numeric_limits<int>::max()) {
-            std::cout << "To vertex " << i+1 << ": No path" << std::endl;
+            std::cout << "No path" << std::endl;
         } else {
-            std::cout << "To vertex " << i+1 << ": " << dist[i] << std::endl;
+            std::cout << "Distance = " << dist[i] << std::endl;
+            
+            // Восстанавливаем и выводим путь
+            std::vector<int> path = reconstruct_path(parent, source, i);
+            
+            std::cout << "  Path: ";
+            for (size_t j = 0; j < path.size(); j++) {
+                std::cout << path[j];
+                if (j < path.size() - 1) {
+                    std::cout << " → ";
+                }
+            }
+            std::cout << std::endl;
+            
+            // Выводим детали пути
+            std::cout << "  Steps: ";
+            int step_count = 0;
+            for (size_t j = 0; j < path.size() - 1; j++) {
+                int u = path[j] - 1;
+                int v = path[j + 1] - 1;
+                
+                // Находим вес ребра
+                int edge_weight = -1;
+                for (const auto& edge : graph[u]) {
+                    if (edge.vertex == v + 1) {
+                        edge_weight = edge.weight;
+                        break;
+                    }
+                }
+                
+                if (edge_weight != -1) {
+                    if (step_count > 0) std::cout << " + ";
+                    std::cout << edge_weight;
+                    step_count++;
+                }
+            }
+            
+            if (step_count > 0) {
+                std::cout << " = " << dist[i] << std::endl;
+            }
         }
     }
     
+    std::cout << "======================================" << std::endl;
     return 0;
 }
 
@@ -412,63 +643,120 @@ int Graph::spanning_tree() {
         return -1;
     }
     
+    // Сначала проверяем связность
+    if (!check_connectivity()) {
+        std::cout << "Graph is not connected!" << std::endl;
+        std::cout << "Cannot build spanning tree for disconnected graph." << std::endl;
+        return -1;
+    }
+    
     // Алгоритм Прима
     std::vector<bool> inMST(vertexes, false);
     std::vector<int> key(vertexes, std::numeric_limits<int>::max());
     std::vector<int> parent(vertexes, -1);
     
-    // Используем priority_queue для эффективного выбора минимального ребра
-    using Pair = std::pair<int, int>; // вес, вершина
+    using Pair = std::pair<int, int>;
     std::priority_queue<Pair, std::vector<Pair>, std::greater<Pair>> pq;
     
-    // Начинаем с вершины 0 (пользовательская вершина 1)
+    // Начинаем с вершины 0
     key[0] = 0;
     pq.push({0, 0});
     
-    while (!pq.empty()) {
+    int total_weight = 0;
+    int edges_added = 0;
+    
+    while (!pq.empty() && edges_added < vertexes - 1) {
         int u = pq.top().second;
+        int current_key = pq.top().first;
         pq.pop();
         
         if (inMST[u]) continue;
+        
         inMST[u] = true;
         
+        // Добавляем вес ребра к общему весу (кроме первой вершины)
+        if (parent[u] != -1) {
+            edges_added++;
+            total_weight += current_key;
+        }
+        
+        // Рассматриваем соседей
         for (const auto& edge : graph[u]) {
-            int v = edge.vertex - 1; // Преобразуем в индекс программы
+            int v = edge.vertex - 1;
             int weight = edge.weight;
             
             if (!inMST[v] && weight < key[v]) {
                 key[v] = weight;
                 parent[v] = u;
-                pq.push({key[v], v});
+                pq.push({weight, v});
             }
         }
     }
     
-    // Вывод минимального остовного дерева
-    std::cout << "Edges in Minimum Spanning Tree:" << std::endl;
-    int total_weight = 0;
+    // Проверяем, что MST содержит все вершины
+    int mst_vertex_count = 0;
+    for (bool in_tree : inMST) {
+        if (in_tree) mst_vertex_count++;
+    }
     
+    // if (mst_vertex_count != vertexes) {
+    //     std::cout << "Warning: MST doesn't include all vertices. Something went wrong." << std::endl;
+    //     return -1;
+    // }
+    
+    // Выводим рёбра MST
+    std::cout << "Edges in Minimum Spanning Tree:" << std::endl;
+    
+    // Собираем рёбра MST
+    std::vector<std::tuple<int, int, int>> mst_edges;
     for (int i = 1; i < vertexes; i++) {
         if (parent[i] != -1) {
-            std::cout << (parent[i] + 1) << " - " << (i + 1) << std::endl;
-            // Находим вес ребра
-            for (const auto& edge : graph[parent[i]]) {
-                if (edge.vertex == i + 1) {
-                    total_weight += edge.weight;
-                    break;
-                }
-            }
+            mst_edges.push_back(std::make_tuple(parent[i] + 1, i + 1, key[i]));
         }
+    }
+    
+    // Сортируем рёбра для красивого вывода
+    std::sort(mst_edges.begin(), mst_edges.end(), 
+        [](const auto& a, const auto& b) {
+            if (std::get<0>(a) != std::get<0>(b))
+                return std::get<0>(a) < std::get<0>(b);
+            return std::get<1>(a) < std::get<1>(b);
+        });
+    
+    // Выводим рёбра
+    for (const auto& edge : mst_edges) {
+        std::cout << std::get<0>(edge) << " - " << std::get<1>(edge) 
+                  << " (weight: " << std::get<2>(edge) << ")" << std::endl;
     }
     
     std::cout << "Total weight of MST: " << total_weight << std::endl;
     return total_weight;
 }
 
+// Восстановление пути от source до target по массиву предков
+std::vector<int> Graph::reconstruct_path(const std::vector<int>& parent, int source, int target) {
+    std::vector<int> path;
+    
+    // Начинаем с конечной вершины
+    int current = target;
+    
+    // Восстанавливаем путь в обратном порядке
+    while (current != -1) {
+        path.push_back(current + 1); // +1 для пользовательских номеров
+        current = parent[current];
+    }
+    
+    // Разворачиваем путь (чтобы был от source до target)
+    std::reverse(path.begin(), path.end());
+    
+    return path;
+}
+
 void Graph::func_handler(int selected) {
     switch (selected) {
         case 0: {       // print_graph
             print_graph();
+            break;
         }
 
         case 1: {       // size
@@ -565,12 +853,12 @@ void Graph::func_handler(int selected) {
             break;
         }
 
-        case 13 : {     // print_connectivity_components
+        case 13: {     // print_connectivity_components
             print_connectivity_components();
             break;
         }
 
-        case 14 : {     // distance
+        case 14: {     // distance
             int a, b;
             std::cout << "Enter the numbers of vertexes:\n";
             std::cout << "a: ";

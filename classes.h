@@ -17,7 +17,8 @@ private:
         int vertex;
         int weight;
     };
-    std::vector<std::vector<Edge>> graph;       // список смежности
+    std::vector<std::vector<Edge>> graph;           // список смежности
+    std::vector<std::vector<Edge>> original_graph;  // оригинальный граф (до преобразования)
 
 public:
     std::string path;                           // путь к файлу, в котором хранится граф
@@ -63,6 +64,9 @@ public:
     int all_distances(int num);                 // найти расстояние от вершины до всех остальных вершин
     int spanning_tree();                        // найти минимальное остовное дерево
     void func_handler(int selected);            // обработчик функций
+
+private:
+    std::vector<int> reconstruct_path(const std::vector<int>& parent, int source, int target); // восстановление пути
 };
 
 class Menu {
